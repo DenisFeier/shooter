@@ -46,7 +46,13 @@ class Player(GameSprite):
             self.rect.x += self.speed
 
     def fire(self):
-        bullet = Bullet(img_bullet, self.rect.centerx, self.rect.top, 15, 20, -15)
+        bullet = Bullet(
+            img_bullet,
+            self.rect.centerx,
+            self.rect.top,
+            15,
+            20,
+            -15)
         bullets.add(bullet)
 
 
@@ -58,6 +64,13 @@ class Enemy(GameSprite):
             self.rect.x = randint(80, win_width - 80)
             self.rect.y = 0
             lost = lost + 1
+
+
+class Bullet(GameSprite):
+    def update(self):
+        self.rect.y += self.speed
+        if self.rect.y < 0:
+            self.kill()
 
 
 win_width = 700
@@ -72,6 +85,8 @@ for i in range(1, 6):
     monster = Enemy(img_enemy, randint(80, win_width - 80), -40, 80, 50, randint(1, 5))
     monsters.add(monster)
 
+bullets = sprite.Group()
+
 finish = False
 run = True
 while run:
@@ -81,7 +96,7 @@ while run:
         elif e.type == KEYDOWN:
             if e.key == K_SPACE:
                 fire_sound.play()
-                # ship.fire()
+                ship.fire()
 
     if not finish:
         window.blit(background, (0, 0))
@@ -94,9 +109,33 @@ while run:
 
         ship.update()
         monsters.update()
+        bullets.update()
 
         ship.reset()
         monsters.draw(window)
+        bullets.draw(window)
+
+        collides = sprite.groupcollide(monsters, bullets, True, True)
+        for c in collides:
+            # this loop will repeat as many times as the number of monsters hit
+            score = score + 1
+            monster = Enemy(
+                img_enemy,
+                randint(80, win_width - 80),
+                -40,
+                80,
+                50,
+                randint(1, 5)
+            )
+            monsters.add(monster)
+
+        if sprite.spritecollide(ship, monsters, False) or lost >= max_lost:
+            finish = True
+            window.blit(lose, (200, 200))
+
+        if score >= goal:
+            finish = True
+            window.blit(win, (200, 200))
 
         display.update()
     time.delay(50)
